@@ -2,33 +2,75 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Share2, Download, Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import AstroChart from '../components/AstroChart';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import astroUtils from '../lib/astroUtils';
+import * as astroUtils from '../lib/astroUtils';
 
 const Results = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [birthData, setBirthData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('chart');
   const [interpretations, setInterpretations] = useState<any[]>([]);
   const [positions, setPositions] = useState<any>(null);
+  const [houses, setHouses] = useState<any>(null);
+  const [aspects, setAspects] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Get data from sessionStorage
     const storedData = sessionStorage.getItem('birthData');
     
     if (storedData) {
-      setBirthData(JSON.parse(storedData));
+      const parsedData = JSON.parse(storedData);
+      setBirthData(parsedData);
+      
+      try {
+        // Calculate actual chart data using birth details
+        const chartData = astroUtils.calculateChart({
+          date: parsedData.date,
+          time: parsedData.time,
+          latitude: 0, // Temporarily hardcoded, should extract from location
+          longitude: 0 // Temporarily hardcoded, should extract from location
+        });
+        
+        setPositions(chartData.planets);
+        setHouses(chartData.houses);
+        setAspects(chartData.aspects);
+        setInterpretations(astroUtils.getBasicInterpretation(chartData));
+        
+        toast({
+          title: "Mapa calculado com sucesso",
+          description: "Os dados astrológicos foram processados corretamente."
+        });
+      } catch (error) {
+        console.error("Erro ao calcular o mapa astral:", error);
+        toast({
+          title: "Erro no cálculo",
+          description: "Ocorreu um erro ao calcular seu mapa astral. Usando dados de exemplo.",
+          variant: "destructive"
+        });
+        
+        // Fallback to sample data
+        setPositions(astroUtils.getPlanetPositions());
+        setHouses(astroUtils.getHousePositions());
+        setAspects(astroUtils.getAspects());
+        setInterpretations(astroUtils.getBasicInterpretation());
+      }
     } else {
       // If no data, redirect to home to input data
+      toast({
+        title: "Dados não encontrados",
+        description: "Por favor, preencha seus dados de nascimento.",
+        variant: "destructive"
+      });
       navigate('/');
     }
-
-    // Get mock interpretations
-    setInterpretations(astroUtils.getBasicInterpretation());
-    setPositions(astroUtils.getPlanetPositions());
-  }, [navigate]);
+    
+    setIsLoading(false);
+  }, [navigate, toast]);
 
   const tabs = [
     { id: 'chart', label: 'Mapa Astral' },
@@ -67,124 +109,127 @@ const Results = () => {
               </div>
             </div>
 
-            {/* Chart View */}
-            {activeTab === 'chart' && (
-              <div className="mb-12 animate-scale-in">
-                <AstroChart birthData={birthData} />
-              </div>
-            )}
-
-            {/* Planets View */}
-            {activeTab === 'planets' && (
-              <div className="glass-panel rounded-xl p-6 animate-scale-in">
-                <h3 className="text-xl font-montserrat text-white mb-6">
-                  Posições Planetárias
-                </h3>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-full">
-                    <thead>
-                      <tr className="border-b border-white/10">
-                        <th className="py-3 text-left text-white font-montserrat">Planeta</th>
-                        <th className="py-3 text-left text-white font-montserrat">Signo</th>
-                        <th className="py-3 text-left text-white font-montserrat">Grau</th>
-                        <th className="py-3 text-left text-white font-montserrat">Casa</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {positions && Object.entries(positions).map(([planet, data]: [string, any]) => (
-                        <tr key={planet} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="py-3 text-white/90 capitalize">{planet}</td>
-                          <td className="py-3 text-white/90">{data.sign}</td>
-                          <td className="py-3 text-white/90">{data.degree}°</td>
-                          <td className="py-3 text-white/90">{data.house}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            {isLoading ? (
+              <div className="h-[400px] rounded-xl glass-panel flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-astro-gold border-t-transparent"></div>
+                  <p className="mt-4 text-white/70">Calculando mapa astral...</p>
                 </div>
               </div>
-            )}
+            ) : (
+              <>
+                {/* Chart View */}
+                {activeTab === 'chart' && (
+                  <div className="mb-12 animate-scale-in">
+                    <AstroChart birthData={birthData} chartData={{ positions, houses, aspects }} />
+                  </div>
+                )}
 
-            {/* Houses View */}
-            {activeTab === 'houses' && (
-              <div className="glass-panel rounded-xl p-6 animate-scale-in">
-                <h3 className="text-xl font-montserrat text-white mb-6">
-                  Casas Astrológicas
-                </h3>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-full">
-                    <thead>
-                      <tr className="border-b border-white/10">
-                        <th className="py-3 text-left text-white font-montserrat">Casa</th>
-                        <th className="py-3 text-left text-white font-montserrat">Signo na Cúspide</th>
-                        <th className="py-3 text-left text-white font-montserrat">Grau</th>
-                        <th className="py-3 text-left text-white font-montserrat">Planetas</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: 12 }).map((_, index) => (
-                        <tr key={index} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="py-3 text-white/90">Casa {index + 1}</td>
-                          <td className="py-3 text-white/90">
-                            {['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'][index]}
-                          </td>
-                          <td className="py-3 text-white/90">{Math.floor(Math.random() * 29) + 1}°</td>
-                          <td className="py-3 text-white/90">
-                            {index === 0 ? 'Sol, Vênus' : 
-                            index === 1 ? 'Lua, Urano' :
-                            index === 2 ? 'Marte' :
-                            index === 9 ? 'Júpiter, Plutão' :
-                            index === 10 ? 'Saturno' :
-                            index === 11 ? 'Netuno' : ''}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+                {/* Planets View */}
+                {activeTab === 'planets' && (
+                  <div className="glass-panel rounded-xl p-6 animate-scale-in">
+                    <h3 className="text-xl font-montserrat text-white mb-6">
+                      Posições Planetárias
+                    </h3>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-full">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="py-3 text-left text-white font-montserrat">Planeta</th>
+                            <th className="py-3 text-left text-white font-montserrat">Signo</th>
+                            <th className="py-3 text-left text-white font-montserrat">Grau</th>
+                            <th className="py-3 text-left text-white font-montserrat">Casa</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {positions && Object.entries(positions).map(([planet, data]: [string, any]) => (
+                            <tr key={planet} className="border-b border-white/5 hover:bg-white/5">
+                              <td className="py-3 text-white/90 capitalize">{planet}</td>
+                              <td className="py-3 text-white/90">{data.sign}</td>
+                              <td className="py-3 text-white/90">{data.degree}°</td>
+                              <td className="py-3 text-white/90">{data.house}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
-            {/* Aspects View */}
-            {activeTab === 'aspects' && (
-              <div className="glass-panel rounded-xl p-6 animate-scale-in">
-                <h3 className="text-xl font-montserrat text-white mb-6">
-                  Aspectos Planetários
-                </h3>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-full">
-                    <thead>
-                      <tr className="border-b border-white/10">
-                        <th className="py-3 text-left text-white font-montserrat">Planeta 1</th>
-                        <th className="py-3 text-left text-white font-montserrat">Aspecto</th>
-                        <th className="py-3 text-left text-white font-montserrat">Planeta 2</th>
-                        <th className="py-3 text-left text-white font-montserrat">Orbe</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { p1: 'Sol', aspect: 'Conjunção', p2: 'Vênus', orb: '2°30\'' },
-                        { p1: 'Lua', aspect: 'Trígono', p2: 'Marte', orb: '1°45\'' },
-                        { p1: 'Mercúrio', aspect: 'Quadratura', p2: 'Júpiter', orb: '3°10\'' },
-                        { p1: 'Vênus', aspect: 'Sextil', p2: 'Saturno', orb: '0°55\'' },
-                        { p1: 'Marte', aspect: 'Oposição', p2: 'Urano', orb: '4°22\'' },
-                        { p1: 'Júpiter', aspect: 'Trígono', p2: 'Netuno', orb: '2°15\'' },
-                        { p1: 'Saturno', aspect: 'Quadratura', p2: 'Plutão', orb: '1°30\'' },
-                      ].map((aspect, index) => (
-                        <tr key={index} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="py-3 text-white/90">{aspect.p1}</td>
-                          <td className="py-3 text-white/90">{aspect.aspect}</td>
-                          <td className="py-3 text-white/90">{aspect.p2}</td>
-                          <td className="py-3 text-white/90">{aspect.orb}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                {/* Houses View */}
+                {activeTab === 'houses' && (
+                  <div className="glass-panel rounded-xl p-6 animate-scale-in">
+                    <h3 className="text-xl font-montserrat text-white mb-6">
+                      Casas Astrológicas
+                    </h3>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-full">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="py-3 text-left text-white font-montserrat">Casa</th>
+                            <th className="py-3 text-left text-white font-montserrat">Signo na Cúspide</th>
+                            <th className="py-3 text-left text-white font-montserrat">Grau</th>
+                            <th className="py-3 text-left text-white font-montserrat">Planetas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {houses && Object.entries(houses).map(([houseNum, data]: [string, any]) => {
+                            // Encontrar planetas nesta casa
+                            const planetsInHouse = positions ? 
+                              Object.entries(positions)
+                                .filter(([_, planetData]: [string, any]) => planetData.house === Number(houseNum))
+                                .map(([planet]: [string, any]) => planet)
+                                .join(', ') : '';
+                                
+                            return (
+                              <tr key={houseNum} className="border-b border-white/5 hover:bg-white/5">
+                                <td className="py-3 text-white/90">Casa {houseNum}</td>
+                                <td className="py-3 text-white/90">{data.sign}</td>
+                                <td className="py-3 text-white/90">{data.degree}°</td>
+                                <td className="py-3 text-white/90">{planetsInHouse}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Aspects View */}
+                {activeTab === 'aspects' && (
+                  <div className="glass-panel rounded-xl p-6 animate-scale-in">
+                    <h3 className="text-xl font-montserrat text-white mb-6">
+                      Aspectos Planetários
+                    </h3>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-full">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="py-3 text-left text-white font-montserrat">Planeta 1</th>
+                            <th className="py-3 text-left text-white font-montserrat">Aspecto</th>
+                            <th className="py-3 text-left text-white font-montserrat">Planeta 2</th>
+                            <th className="py-3 text-left text-white font-montserrat">Orbe</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {aspects && aspects.map((aspect: any, index: number) => (
+                            <tr key={index} className="border-b border-white/5 hover:bg-white/5">
+                              <td className="py-3 text-white/90 capitalize">{aspect.planets[0]}</td>
+                              <td className="py-3 text-white/90">{aspect.aspect}</td>
+                              <td className="py-3 text-white/90 capitalize">{aspect.planets[1]}</td>
+                              <td className="py-3 text-white/90">{aspect.orb}°</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Actions */}
