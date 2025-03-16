@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, User, Star } from 'lucide-react';
+import { Calendar, MapPin, Clock, User, Star, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type BirthData = {
   name: string;
@@ -12,28 +13,105 @@ type BirthData = {
 
 const BirthDataForm = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [formData, setFormData] = useState<BirthData>({
     name: '',
     date: '',
     time: '',
     location: '',
   });
+  const [errors, setErrors] = useState<Partial<BirthData>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Preencher com dados anteriores se existirem
+  useEffect(() => {
+    const savedData = sessionStorage.getItem('birthData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData);
+      } catch (e) {
+        console.error("Erro ao carregar dados salvos:", e);
+      }
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Limpar erro quando o campo é editado
+    if (errors[name as keyof BirthData]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = (): boolean => {
+    const newErrors: Partial<BirthData> = {};
+    let isValid = true;
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Nome é obrigatório';
+      isValid = false;
+    }
+    
+    if (!formData.date) {
+      newErrors.date = 'Data de nascimento é obrigatória';
+      isValid = false;
+    }
+    
+    if (!formData.time) {
+      newErrors.time = 'Hora de nascimento é obrigatória';
+      isValid = false;
+    }
+    
+    if (!formData.location.trim()) {
+      newErrors.location = 'Local de nascimento é obrigatório';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, we'd validate and process the data
-    // For now, we'll just navigate to the results page
     
-    // Store the data in sessionStorage to access it on the results page
-    sessionStorage.setItem('birthData', JSON.stringify(formData));
+    if (!validateForm()) {
+      toast({
+        title: "Dados incompletos",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Navigate to results
-    navigate('/results');
+    setIsSubmitting(true);
+    
+    try {
+      // Simulando um processamento/cálculo
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Armazenar os dados no sessionStorage
+      sessionStorage.setItem('birthData', JSON.stringify(formData));
+      
+      // Notificar o usuário
+      toast({
+        title: "Mapa Astral preparado!",
+        description: "Seus dados foram processados com sucesso.",
+      });
+      
+      // Navegar para a página de resultados
+      navigate('/results');
+    } catch (error) {
+      toast({
+        title: "Erro ao processar dados",
+        description: "Ocorreu um erro ao processar seus dados. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -47,6 +125,7 @@ const BirthDataForm = () => {
           <label htmlFor="name" className="cosmic-label flex items-center space-x-1">
             <User className="h-4 w-4 text-astro-silver" />
             <span>Nome</span>
+            {errors.name && <AlertCircle className="h-4 w-4 text-destructive ml-1" />}
           </label>
           <input
             type="text"
@@ -56,14 +135,16 @@ const BirthDataForm = () => {
             placeholder="Seu nome completo"
             value={formData.name}
             onChange={handleChange}
-            className="cosmic-input w-full"
+            className={`cosmic-input w-full ${errors.name ? 'border-destructive' : ''}`}
           />
+          {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
         </div>
         
         <div>
           <label htmlFor="date" className="cosmic-label flex items-center space-x-1">
             <Calendar className="h-4 w-4 text-astro-silver" />
             <span>Data de Nascimento</span>
+            {errors.date && <AlertCircle className="h-4 w-4 text-destructive ml-1" />}
           </label>
           <input
             type="date"
@@ -72,14 +153,16 @@ const BirthDataForm = () => {
             required
             value={formData.date}
             onChange={handleChange}
-            className="cosmic-input w-full"
+            className={`cosmic-input w-full ${errors.date ? 'border-destructive' : ''}`}
           />
+          {errors.date && <p className="text-xs text-destructive mt-1">{errors.date}</p>}
         </div>
         
         <div>
           <label htmlFor="time" className="cosmic-label flex items-center space-x-1">
             <Clock className="h-4 w-4 text-astro-silver" />
             <span>Hora de Nascimento</span>
+            {errors.time && <AlertCircle className="h-4 w-4 text-destructive ml-1" />}
           </label>
           <input
             type="time"
@@ -88,14 +171,19 @@ const BirthDataForm = () => {
             required
             value={formData.time}
             onChange={handleChange}
-            className="cosmic-input w-full"
+            className={`cosmic-input w-full ${errors.time ? 'border-destructive' : ''}`}
           />
+          {errors.time && <p className="text-xs text-destructive mt-1">{errors.time}</p>}
+          <p className="text-xs text-astro-silver/70 mt-1">
+            Se não souber a hora exata, use 12:00
+          </p>
         </div>
         
         <div>
           <label htmlFor="location" className="cosmic-label flex items-center space-x-1">
             <MapPin className="h-4 w-4 text-astro-silver" />
             <span>Local de Nascimento</span>
+            {errors.location && <AlertCircle className="h-4 w-4 text-destructive ml-1" />}
           </label>
           <input
             type="text"
@@ -105,17 +193,28 @@ const BirthDataForm = () => {
             placeholder="Cidade, País"
             value={formData.location}
             onChange={handleChange}
-            className="cosmic-input w-full"
+            className={`cosmic-input w-full ${errors.location ? 'border-destructive' : ''}`}
           />
+          {errors.location && <p className="text-xs text-destructive mt-1">{errors.location}</p>}
         </div>
 
         <div className="pt-2">
           <button 
             type="submit" 
+            disabled={isSubmitting}
             className="w-full py-3 bg-gradient-to-r from-astro-purple to-astro-deep-blue text-white font-montserrat font-medium rounded-lg transition-all duration-300 hover:shadow-neon-purple flex items-center justify-center"
           >
-            <Star className="h-4 w-4 mr-2" />
-            <span>Revele seu Mapa Astral</span>
+            {isSubmitting ? (
+              <>
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span>Processando...</span>
+              </>
+            ) : (
+              <>
+                <Star className="h-4 w-4 mr-2" />
+                <span>Revele seu Mapa Astral</span>
+              </>
+            )}
           </button>
         </div>
       </form>
