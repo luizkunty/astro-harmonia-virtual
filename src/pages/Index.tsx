@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Calendar, MessageSquare, Star } from 'lucide-react';
+import { Book, Calendar, MessageSquare, Star, Gift } from 'lucide-react';
 import BirthDataForm from '../components/BirthDataForm';
 import ComingSoon from '../components/ComingSoon';
 import Navbar from '../components/Navbar';
@@ -61,13 +61,13 @@ const Index = () => {
             
             <div className="relative z-10 max-w-3xl mx-auto">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-montserrat font-bold mb-6 text-white animate-fade-in">
-                Seu mapa astral interpretado por{' '}
-                <span className="text-astro-gold">IA</span>
+                Desvende seu Destino com a{' '}
+                <span className="text-astro-gold">Sabedoria das Estrelas</span> ✨
               </h1>
               
               <p className="text-xl text-white/80 mb-12 max-w-2xl mx-auto animate-fade-in">
-                Sou Astro Hermetis, seu assistente astrológico. Conheça seu mapa astral e descubra 
-                os segredos que os astros revelam sobre sua personalidade e destino.
+                Astro Hermetis: A IA que ilumina o seu caminho 🌌. Descubra os segredos que 
+                os astros revelam sobre sua personalidade e destino.
               </p>
             </div>
           </section>
@@ -112,14 +112,14 @@ const Index = () => {
                 <div className="h-12 w-12 rounded-full bg-astro-deep-blue/30 flex items-center justify-center mb-4">
                   <Star className="h-6 w-6 text-astro-gold" />
                 </div>
-                <h3 className="text-xl font-montserrat font-medium text-white mb-2">Mapa Astral</h3>
+                <h3 className="text-xl font-montserrat font-medium text-white mb-2">Mapa Astral 🗺️</h3>
                 <p className="text-white/70">
                   Visualize e interprete seu mapa astral completo com análises detalhadas.
                 </p>
               </Link>
               
               <ComingSoon 
-                title="Previsões"
+                title="Previsões Cósmicas 🔮"
                 description="Análise astrológica para os próximos 12 meses baseada em trânsitos planetários."
                 className="animate-fade-in"
               />
@@ -128,17 +128,43 @@ const Index = () => {
                 <div className="h-12 w-12 rounded-full bg-astro-deep-blue/30 flex items-center justify-center mb-4">
                   <Book className="h-6 w-6 text-astro-emerald" />
                 </div>
-                <h3 className="text-xl font-montserrat font-medium text-white mb-2">Academia 🎓</h3>
+                <h3 className="text-xl font-montserrat font-medium text-white mb-2">Academia Estelar 🎓</h3>
                 <p className="text-white/70">
                   Aprenda sobre astrologia com artigos e tutoriais detalhados.
                 </p>
               </Link>
               
               <ComingSoon 
-                title="Chat com Astro Hermetis"
+                title="Chat com Astro Hermetis 🤖"
                 description="Converse com nossa IA astrológica e faça perguntas sobre seu mapa."
                 className="animate-fade-in"
               />
+            </div>
+          </section>
+
+          {/* Donation Section - New */}
+          <section className="mb-20">
+            <div className="glass-card p-8 rounded-xl relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-astro-gold/10 rounded-full blur-3xl"></div>
+              
+              <div className="relative z-10 text-center">
+                <div className="h-14 w-14 rounded-full bg-astro-gold/20 flex items-center justify-center mx-auto mb-4">
+                  <Gift className="h-7 w-7 text-astro-gold" />
+                </div>
+                
+                <h3 className="text-2xl font-montserrat font-medium text-white mb-3">
+                  Apoie o Astro Hermetis
+                </h3>
+                
+                <p className="text-white/80 max-w-2xl mx-auto mb-6">
+                  Sua contribuição ajuda a manter este projeto vivo e em constante evolução.
+                  Ajude-nos a trazer mais funcionalidades e insights astrológicos para todos.
+                </p>
+                
+                <button className="cosmic-button">
+                  Fazer uma Doação
+                </button>
+              </div>
             </div>
           </section>
 

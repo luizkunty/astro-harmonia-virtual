@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock } from 'lucide-react';
+import { Calendar, MapPin, Clock, User } from 'lucide-react';
 
 type BirthData = {
   name: string;
@@ -44,7 +44,10 @@ const BirthDataForm = () => {
       
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="name" className="cosmic-label">Nome</label>
+          <label htmlFor="name" className="cosmic-label flex items-center space-x-1">
+            <User className="h-4 w-4 text-astro-silver" />
+            <span>Nome</span>
+          </label>
           <input
             type="text"
             id="name"
@@ -109,9 +112,10 @@ const BirthDataForm = () => {
         <div className="pt-2">
           <button 
             type="submit" 
-            className="w-full py-3 bg-gradient-to-r from-astro-purple to-astro-deep-blue text-white font-montserrat font-medium rounded-lg transition-all duration-300 hover:shadow-neon-purple"
+            className="w-full py-3 bg-gradient-to-r from-astro-purple to-astro-deep-blue text-white font-montserrat font-medium rounded-lg transition-all duration-300 hover:shadow-neon-purple flex items-center justify-center"
           >
-            Gerar Mapa Astral
+            <Star className="h-4 w-4 mr-2" />
+            <span>Revele seu Mapa Astral</span>
           </button>
         </div>
       </form>
