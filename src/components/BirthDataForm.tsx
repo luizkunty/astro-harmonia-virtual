@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, User } from 'lucide-react';
+import { Calendar, MapPin, Clock, User, Star } from 'lucide-react';
 
 type BirthData = {
   name: string;
